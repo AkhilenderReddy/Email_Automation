@@ -1,13 +1,8 @@
-const express = require('express');
-const bodyParser = require('body-parser');
 const Groq = require('groq-sdk');
 
 const groq = new Groq({
   apiKey: "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"
 });
-
-const app = express();
-app.use(bodyParser.json());
 
 async function extractEmailDetails(emailDetails) {
   const { from, to, subject, body } = emailDetails;
@@ -60,7 +55,7 @@ async function generateReply(emailDetails) {
           "content": "Categorize and suggest an appropriate response."
         },{
           "role": "user",
-          "content": "the output should not contain any extra text except this json object\n {\"categorization\": \"Interested/NotInterested/More Information\",\"response\":{\"subject\": \"Response Email Subject\",\"body\": \"Response Email Body\"}}\n"
+          "content": "the output should not contain any extra text expect this json object\n {\"categorization\": \"Interested/NotInterested/More Information\",\"response\":{\"subject\": \"Response Email Subject\",\"body\": \"Response Email Body\"}}\n"
         },
         {
           "role": "assistant",
@@ -77,23 +72,28 @@ async function generateReply(emailDetails) {
 
     const reply = chatCompletion.choices[0]?.message?.content?.trim();
 
+    // Constructing the output in the specified format
+
+
+
+    
     function extractValues(jsonString) {
       try {
         const jsonObject = JSON.parse(jsonString);
-
+    
         const categorization = jsonObject.categorization;
         const subject = jsonObject.response.subject;
         const body = jsonObject.response.body;
-
+    
         return { categorization, subject, body };
       } catch (error) {
         console.error("Failed to parse JSON string:", error);
         return null;
       }
     }
-
+    
     const extractedValues = extractValues(reply);
-
+    
     const output = {
       categorization: "",
       response: {
@@ -105,10 +105,15 @@ async function generateReply(emailDetails) {
     if (extractedValues) {
       output.categorization=extractedValues.categorization;
       output.response.subject=extractedValues.subject;
-      output.response.body=extractedValues.body;
+      output.response.body=extractedValues.body
+      // console.log(output);
+      // console.log("Categorization:", extractedValues.categorization);
+      // console.log("Subject:", extractedValues.subject);
+      // console.log("Body:", extractedValues.body);
     } else {
       console.log("Failed to extract values.");
     }
+    
 
     return output;
   } catch (error) {
@@ -128,17 +133,22 @@ async function main(inputEmail) {
   }
 }
 
-app.post('/process-email', async (req, res) => {
-  const inputEmail = req.body;
-  try {
-    const response = await main(inputEmail);
-    res.json(response);
-  } catch (error) {
-    res.status(500).json({ error: "Failed to process email" });
-  }
-});
+// Example usage:
 
-const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => {
-  console.log(`Server is running on port ${PORT}`);
-});
+
+const inputEmail ={
+  "from": "client@example.com",
+  "to": "sales@example.com",
+  "subject": "Re: Proposal for New Product Line",
+  "body": "Dear Sales Team,\n\nThank you for your proposal regarding the new product line. After reviewing it, we have decided not to proceed with the purchase at this time.\n\nWe appreciate your efforts and will keep your proposal in mind for future opportunities.\n\nBest regards,\nJane Smith"
+};
+
+main(inputEmail)
+  .then(response => {
+    console.log("Final Response:");
+    console.log(response);
+  })
+  .catch(error => {
+    console.error("Error in main function:", error);
+  });
+

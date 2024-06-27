@@ -4,8 +4,8 @@ const natural = require('natural');
 const { OAuth2 } = google.auth;
 
 // OAuth2 credentials
-const CLIENT_ID = '180880427697-n13kfnfdmfp8uporeismvmmkk3pu1h4a.apps.googleusercontent.com';
-const CLIENT_SECRET = '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';
+const CLIENT_ID = process.env.CLIENT_ID;
+const CLIENT_SECRET = process.env.CLIENT_SECRET;
 const REDIRECT_URI = 'https://developers.google.com/oauthplayground';
 const REFRESH_TOKEN = '1//04rGswGAw32MtCgYIARAAGAQSNwF-L9IrudQnDzi5Lo69hahedspYN77qkXg8ksghFJaPMc2e0T7vljGEeD948fkQ8LiHArIesnw';
 
@@ -161,7 +161,7 @@ async function sendMail(to, subject, text) {
 }
 
 // Interval to process emails every 5 minutes (adjust as needed)
-setInterval(processEmails, 5 * 60 * 1000);
+setInterval(processEmails,5*60*1000);
 
 // Initial call to start processing emails
 processEmails();
