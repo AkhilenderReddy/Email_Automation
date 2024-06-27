@@ -1,3 +1,4 @@
+require('dotenv').config();
 const { google } = require('googleapis');
 const nodemailer = require('nodemailer');
 const natural = require('natural');
