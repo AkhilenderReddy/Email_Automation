@@ -1,18 +1,22 @@
-require('dotenv').config();
-const express = require('express');
-const bodyParser = require('body-parser');
-const Groq = require('groq-sdk');
+require("dotenv").config();
+const express = require("express");
+const bodyParser = require("body-parser");
+const Groq = require("groq-sdk");
 
 const groq = new Groq({
-  apiKey: process.env.apiKey
+  apiKey: process.env.apiKey,
 });
+// console.log(groq.apiKey);
 
 const app = express();
 app.use(bodyParser.json());
 
 async function extractEmailDetails(emailDetails) {
   const { from, to, subject, body } = emailDetails;
-
+  // console.log(from);
+  // console.log(to);
+  // console.log(subject);
+  // console.log(body);
   const emailString = `
     "from": "${from}",
     "to": "${to}",
@@ -29,8 +33,11 @@ async function extractEmailDetails(emailDetails) {
     from: fromMatch ? fromMatch[1] : "",
     to: toMatch ? toMatch[1] : "",
     subject: subjectMatch ? subjectMatch[1] : "",
-    body: bodyMatch ? bodyMatch[1] : ""
+    body: bodyMatch ? bodyMatch[1] : "",
   };
+
+
+  console.log(extractedDetails);
 
   return extractedDetails;
 }
@@ -38,42 +45,47 @@ async function extractEmailDetails(emailDetails) {
 async function generateReply(emailDetails) {
   try {
     const chatCompletion = await groq.chat.completions.create({
-      "messages": [
+      messages: [
         {
-          "role": "assistant",
-          "content": "Write an email for me. I will provide you the subject and give it in JSON format. This should follow this format: {from: sender email, to: receiver email, subject: \"\", body: \"\"}"
+          role: "assistant",
+          content:
+            'Write an email for me. I will provide you the subject and give it in JSON format. This should follow this format: {from: sender email, to: receiver email, subject: "", body: ""}',
         },
         {
-          "role": "user",
-          "content": `{
+          role: "user",
+          content: `{
             "from": "${emailDetails.from}",
             "to": "${emailDetails.to}",
             "subject": "${emailDetails.subject}",
             "body": "${emailDetails.body}"
-          }`
+          }`,
         },
         {
-          "role": "assistant",
-          "content": "Categorize the email based on the content and assign a label as follows: Interested, NotInterested, More information."
+          role: "assistant",
+          content:
+            "Categorize the email based on the content and assign a label as follows: Interested, NotInterested, More information.",
         },
         {
-          "role": "user",
-          "content": "Categorize and suggest an appropriate response."
-        },{
-          "role": "user",
-          "content": "the output should not contain any extra text except this json object\n {\"categorization\": \"Interested/NotInterested/More Information\",\"response\":{\"subject\": \"Response Email Subject\",\"body\": \"Response Email Body\"}}\n"
+          role: "user",
+          content: "Categorize and suggest an appropriate response.",
         },
         {
-          "role": "assistant",
-          "content": "It seems like you forgot to provide the JSON data again.\n\nPlease paste the JSON data in the format:\n{\n    \"from\": \"sender@example.com\",\n    \"to\": \"receiver@example.com\",\n    \"subject\": \"Email Subject\",\n}\n\nI'll generate the output in the specified format:\n{\"categorization\": \"Interested/NotInterested/More Information\",\n    \"response\": {\n        \"subject\": \"Response Email Subject\",\n        \"body\": \"Response Email Body\"\n    }\n}"
-        }
+          role: "user",
+          content:
+            'the output should not contain any extra text except this json object\n {"categorization": "Interested/NotInterested/More Information","response":{"subject": "Response Email Subject","body": "Response Email Body"}}\n',
+        },
+        {
+          role: "assistant",
+          content:
+            'It seems like you forgot to provide the JSON data again.\n\nPlease paste the JSON data in the format:\n{\n    "from": "sender@example.com",\n    "to": "receiver@example.com",\n    "subject": "Email Subject",\n}\n\nI\'ll generate the output in the specified format:\n{"categorization": "Interested/NotInterested/More Information",\n    "response": {\n        "subject": "Response Email Subject",\n        "body": "Response Email Body"\n    }\n}',
+        },
       ],
-      "model": "llama3-8b-8192",
-      "temperature": 1,
-      "max_tokens": 8192,
-      "top_p": 1,
-      "stream": false,
-      "stop": null
+      model: "llama3-8b-8192",
+      temperature: 1,
+      max_tokens: 8192,
+      top_p: 1,
+      stream: false,
+      stop: null,
     });
 
     const reply = chatCompletion.choices[0]?.message?.content?.trim();
@@ -99,14 +111,14 @@ async function generateReply(emailDetails) {
       categorization: "",
       response: {
         subject: "",
-        body: reply
-      }
+        body: reply,
+      },
     };
 
     if (extractedValues) {
-      output.categorization=extractedValues.categorization;
-      output.response.subject=extractedValues.subject;
-      output.response.body=extractedValues.body;
+      output.categorization = extractedValues.categorization;
+      output.response.subject = extractedValues.subject;
+      output.response.body = extractedValues.body;
     } else {
       console.log("Failed to extract values.");
     }
@@ -121,6 +133,7 @@ async function generateReply(emailDetails) {
 async function main(inputEmail) {
   try {
     const emailDetails = await extractEmailDetails(inputEmail);
+    // console.log(emailDetails);
     const automatedReply = await generateReply(emailDetails);
     return automatedReply;
   } catch (error) {
@@ -129,12 +142,43 @@ async function main(inputEmail) {
   }
 }
 
-app.post('/process-email', async (req, res) => {
-  const inputEmail = req.body;
+const inputEmail = {
+  from: "client@example.com",
+  to: "sales@example.com",
+  subject: "Proposal for New Product Line",
+  body: "Dear Sales Team,\n\nThank you for your proposal regarding the new product line. After reviewing it, we have decided not to proceed with the purchase at this time.\n\nWe appreciate your efforts and will keep your proposal in mind for future opportunities.\n\nBest regards,\nJane Smith",
+};
+
+// main(inputEmail)
+//   .then((response) => {
+//     console.log("Final Response:");
+//     console.log(response);
+//   })
+//   .catch((error) => {
+//     console.error("Error in main function:", error);
+//   });
+
+app.post("/process-email", async (req, res) => {
   try {
+    const { from, to, subject, body } = req.body;
+
+    if (!from || !to || !subject || !body) {
+      return res.status(400).json({ error: "Missing email details" });
+    }
+
+    const inputEmail = {
+      from: from,
+      to: to,
+      subject: subject,
+      body: body.replace(/\n/g, " "),
+    };
+
+    console.log(inputEmail);
+
     const response = await main(inputEmail);
     res.json(response);
   } catch (error) {
+    console.error("Error in /process-email route:", error);
     res.status(500).json({ error: "Failed to process email" });
   }
 });
