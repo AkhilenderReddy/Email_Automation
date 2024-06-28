@@ -4,7 +4,7 @@ const bodyParser = require("body-parser");
 const Groq = require("groq-sdk");
 
 const groq = new Groq({
-  apiKey: process.env.apiKey,
+  apiKey: "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",
 });
 // console.log(groq.apiKey);
 
