@@ -1,6 +1,6 @@
-# Email Processing Automation
+# Email Automation Using - llama3-8b-8192
 
-This project is an automated email processing system designed to streamline and enhance email management. The system integrates with Gmail to fetch unread emails, categorizes them using the Groq SDK with LLM (Llama), generates automated replies, and sends responses via Nodemailer. The purpose of this project is to reduce the manual effort required in handling emails by providing a robust, efficient, and reliable solution for email automation. By automating email responses, it ensures timely replies, improves productivity, and enhances communication efficiency.
+The goal of this project is to minimize the manual effort involved in managing emails by offering a robust, efficient, and dependable solution for email automation. By automating email responses, it ensures prompt replies, boosts productivity, and enhances communication efficiency. This system parses and checks emails from Google email accounts, automatically responding based on their context using AI. Integrated with Gmail, it retrieves unread emails, categorizes them using the Groq SDK with LLM (Llama), generates automated replies, and sends responses via Nodemailer.
 
 ## Requirements
 
