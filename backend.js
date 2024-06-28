@@ -92,7 +92,7 @@ async function processEmails() {
   }
 }
 
-// Function to call the new API and generate an automated reply
+// Function to call the Anaylsis API and generate an automated reply
 async function generateAutomatedReply(from, to, subject, body) {
   try {
     const response = await axios.post("http://localhost:3000/process-email", {
