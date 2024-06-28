@@ -1,18 +1,14 @@
 require("dotenv").config();
 const { google } = require("googleapis");
 const nodemailer = require("nodemailer");
-const natural = require("natural");
 const { OAuth2 } = google.auth;
+const axios = require("axios");
 
 // OAuth2 credentials
 const CLIENT_ID = process.env.CLIENT_ID;
-// console.log(process.env.CLIENT_ID);
 const CLIENT_SECRET = process.env.CLIENT_SECRET;
-// console.log(process.env.CLIENT_SECRET);
 const REDIRECT_URI = "https://developers.google.com/oauthplayground";
 const REFRESH_TOKEN = process.env.REFRESH_TOKEN;
-// console.log(process.env.REFRESH_TOKEN);
-
 
 // Create an OAuth2 client
 const oAuth2Client = new OAuth2(CLIENT_ID, CLIENT_SECRET, REDIRECT_URI);
@@ -30,7 +26,6 @@ async function processEmails() {
       q: "is:unread",
     });
 
-    // console.log("here", res);
     if (res.data.messages && res.data.messages.length) {
       for (const message of res.data.messages) {
         const msg = await gmail.users.messages.get({
@@ -43,6 +38,14 @@ async function processEmails() {
           (header) => header.name === "From"
         );
         const from = fromHeader ? fromHeader.value : "";
+        const toHeader = emailData.payload.headers.find(
+          (header) => header.name === "To"
+        );
+        const to = toHeader ? toHeader.value : "";
+        const subjectHeader = emailData.payload.headers.find(
+          (header) => header.name === "Subject"
+        );
+        const subject = subjectHeader ? subjectHeader.value : "";
 
         let body = "";
         if (emailData.payload.parts) {
@@ -61,18 +64,15 @@ async function processEmails() {
         console.log("Email From:", from);
         console.log("Email Body:", body);
 
-        // Categorize email based on content
-        const category = categorizeEmail(body);
-
-        // Suggest response based on category
-        const response = suggestResponse(category);
+        // Call the new API to get automated reply
+        const response = await generateAutomatedReply(from, to, subject, body);
 
         // Send automatic reply
         await sendMail(
           from,
-          "RE: " + emailData.snippet,
-          response.subject,
-          response.message
+          "RE: " + response.response.subject,
+          response.response.body,
+          response.response.body
         );
 
         // Mark email as read
@@ -92,46 +92,33 @@ async function processEmails() {
   }
 }
 
-// Function to categorize email based on content
-function categorizeEmail(content) {
-  // Example logic - using natural language processing library 'natural' for demo
-  // Implement your own logic based on content analysis requirements
-  if (content.includes("interested")) {
-    return "Interested";
-  } else if (content.includes("more information")) {
-    return "More information";
-  } else {
-    return "Not interested";
-  }
-}
-
-// Function to suggest response based on email category
-function suggestResponse(category) {
-  switch (category) {
-    case "Interested":
-      return {
-        subject: "Interested in Demo Call",
-        message:
-          "Dear Customer,\n\nThank you for your interest. Would you be available for a demo call? Please suggest a convenient time.\n\nBest regards,\nYour Company",
-      };
-    case "More information":
-      return {
-        subject: "More Information Request",
-        message:
-          "Dear Customer,\n\nThank you for your inquiry. Could you please specify what additional information you need?\n\nBest regards,\nYour Company",
-      };
-    case "Not interested":
-    default:
-      return {
-        subject: "Thank you for your Inquiry",
-        message:
-          "Dear Customer,\n\nThank you for reaching out. If you have any further questions in the future, feel free to contact us.\n\nBest regards,\nYour Company",
-      };
+// Function to call the new API and generate an automated reply
+async function generateAutomatedReply(from, to, subject, body) {
+  try {
+    const response = await axios.post("http://localhost:3000/process-email", {
+      from,
+      to,
+      subject,
+      body: body.replace(/\n/g, " "),
+    });
+    return response.data;
+  } catch (error) {
+    console.error("Error generating automated reply:", error);
+    throw error;
   }
 }
 
 // Function to send email using nodemailer
 async function sendMail(to, subject, text) {
+
+  console.log("Subject");
+  console.log("+++++++++++++++++");
+  console.log(subject);
+  console.log("+++++++++++++++++");
+  console.log("body");
+  console.log("+++++++++++++++++");
+  console.log(text);
+
   try {
     // Get access token
     const accessToken = await oAuth2Client.getAccessToken();
@@ -151,7 +138,7 @@ async function sendMail(to, subject, text) {
 
     // Email options
     const mailOptions = {
-      from: " chandler <samplemail7843370@gmail.com>", // Replace with your name and Gmail address
+      from: "chandler <samplemail7843370@gmail.com>", // Replace with your name and Gmail address
       to: to,
       subject: subject,
       text: text,
@@ -165,11 +152,11 @@ async function sendMail(to, subject, text) {
   }
 }
 
-// Interval to process emails every 5 minutes (adjust as needed)
+// Interval to process emails every 10 seconds
 setInterval(() => {
   processEmails();
   console.log("Checking Email", Date.now());
-},5* 1000);
+}, 10 * 1000);
 
 // Initial call to start processing emails
 processEmails();
