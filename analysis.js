@@ -4,38 +4,30 @@ const bodyParser = require("body-parser");
 const Groq = require("groq-sdk");
 
 const groq = new Groq({
-  apiKey: process.env.apiKey,
+  apiKey: "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",
 });
+// console.log(groq.apiKey);
 
 const app = express();
 app.use(bodyParser.json());
 
+
 async function extractEmailDetails(emailDetails) {
   const { from, to, subject, body } = emailDetails;
 
-  const emailString = `
-    "from": "${from}",
-    "to": "${to}",
-    "subject": "${subject}",
-    "body": "${body}"
-  `;
-
-  const fromMatch = emailString.match(/"from": "(.*?)"/);
-  const toMatch = emailString.match(/"to": "(.*?)"/);
-  const subjectMatch = emailString.match(/"subject": "(.*?)"/);
-  const bodyMatch = emailString.match(/"body": "(.*?)"/s);
-
+  // Constructing valid JSON object
   const extractedDetails = {
-    from: fromMatch ? fromMatch[1] : "",
-    to: toMatch ? toMatch[1] : "",
-    subject: subjectMatch ? subjectMatch[1] : "",
-    body: bodyMatch ? bodyMatch[1] : "",
+    from: from || "",
+    to: to || "",
+    subject: subject || "",
+    body: body || "",
   };
 
-  console.log(extractedDetails);
+  console.log("Extracted Details:", extractedDetails);
 
   return extractedDetails;
 }
+
 
 async function generateReply(emailDetails) {
   try {
@@ -43,22 +35,15 @@ async function generateReply(emailDetails) {
       messages: [
         {
           role: "assistant",
-          content:
-            'Write an email for me. I will provide you the subject and give it in JSON format. This should follow this format: {from: sender email, to: receiver email, subject: "", body: ""}',
+          content: 'Write an email for me. I will provide you the subject and give it in JSON format. This should follow this format: {from: sender email, to: receiver email, subject: "", body: ""}',
         },
         {
           role: "user",
-          content: `{
-            "from": "${emailDetails.from}",
-            "to": "${emailDetails.to}",
-            "subject": "${emailDetails.subject}",
-            "body": "${emailDetails.body}"
-          }`,
+          content: JSON.stringify(emailDetails),
         },
         {
           role: "assistant",
-          content:
-            "Categorize the email based on the content and assign a label as follows: Interested, NotInterested, More information.",
+          content: "Categorize the email based on the content and assign a label as follows: Interested, NotInterested, More information.",
         },
         {
           role: "user",
@@ -66,13 +51,11 @@ async function generateReply(emailDetails) {
         },
         {
           role: "user",
-          content:
-            'the output should not contain any extra text except this json object\n {"categorization": "Interested/NotInterested/More Information","response":{"subject": "Response Email Subject","body": "Response Email Body"}}\n',
+          content: 'the output should not contain any extra text except this json object\n {"categorization": "Interested/NotInterested/More Information","response":{"subject": "Response Email Subject","body": "Response Email Body"}}\n',
         },
         {
           role: "assistant",
-          content:
-            'It seems like you forgot to provide the JSON data again.\n\nPlease paste the JSON data in the format:\n{\n    "from": "sender@example.com",\n    "to": "receiver@example.com",\n    "subject": "Email Subject",\n}\n\nI\'ll generate the output in the specified format:\n{"categorization": "Interested/NotInterested/More Information",\n    "response": {\n        "subject": "Response Email Subject",\n        "body": "Response Email Body"\n    }\n}',
+          content: 'It seems like you forgot to provide the JSON data again.\n\nPlease paste the JSON data in the format:\n{\n    "from": "sender@example.com",\n    "to": "receiver@example.com",\n    "subject": "Email Subject",\n}\n\nI\'ll generate the output in the specified format:\n{"categorization": "Interested/NotInterested/More Information",\n    "response": {\n        "subject": "Response Email Subject",\n        "body": "Response Email Body"\n    }\n}',
         },
       ],
       model: "llama3-8b-8192",
@@ -84,15 +67,14 @@ async function generateReply(emailDetails) {
     });
 
     const reply = chatCompletion.choices[0]?.message?.content?.trim();
+    console.log("Raw reply from Groq:", reply);
 
     function extractValues(jsonString) {
       try {
         const jsonObject = JSON.parse(jsonString);
-
         const categorization = jsonObject.categorization;
         const subject = jsonObject.response.subject;
         const body = jsonObject.response.body;
-
         return { categorization, subject, body };
       } catch (error) {
         console.error("Failed to parse JSON string:", error);
@@ -101,23 +83,19 @@ async function generateReply(emailDetails) {
     }
 
     const extractedValues = extractValues(reply);
+    if (!extractedValues) {
+      throw new Error("Failed to extract values from Groq response.");
+    }
 
     const output = {
-      categorization: "",
+      categorization: extractedValues.categorization,
       response: {
-        subject: "",
-        body: reply,
+        subject: extractedValues.subject,
+        body: extractedValues.body,
       },
     };
 
-    if (extractedValues) {
-      output.categorization = extractedValues.categorization;
-      output.response.subject = extractedValues.subject;
-      output.response.body = extractedValues.body;
-    } else {
-      console.log("Failed to extract values.");
-    }
-
+    console.log("Output:", output);
     return output;
   } catch (error) {
     console.error("Error during Groq request:", error);
@@ -125,9 +103,11 @@ async function generateReply(emailDetails) {
   }
 }
 
+
 async function main(inputEmail) {
   try {
     const emailDetails = await extractEmailDetails(inputEmail);
+    // console.log(emailDetails);
     const automatedReply = await generateReply(emailDetails);
     return automatedReply;
   } catch (error) {
@@ -135,6 +115,15 @@ async function main(inputEmail) {
     return { error: "Failed to process email" };
   }
 }
+
+// main(inputEmail)
+//   .then((response) => {
+//     console.log("Final Response:");
+//     console.log(response);
+//   })
+//   .catch((error) => {
+//     console.error("Error in main function:", error);
+//   });
 
 app.post("/process-email", async (req, res) => {
   try {
