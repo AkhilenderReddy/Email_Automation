@@ -28,7 +28,7 @@ The goal of this project is to minimize the manual effort involved in managing e
    Install the project dependencies using npm:
 
    ```sh
-   npm install googleapis nodemailer axios express body-parser groq-sdk dotenv
+   npm install 
    ```
 
    This command installs the necessary Node.js packages:
