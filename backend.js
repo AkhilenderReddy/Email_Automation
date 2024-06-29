@@ -7,7 +7,7 @@ const axios = require("axios");
 // OAuth2 credentials
 const CLIENT_ID = process.env.CLIENT_ID;
 const CLIENT_SECRET = process.env.CLIENT_SECRET;
-const REDIRECT_URI = "https://developers.google.com/oauthplayground";
+const REDIRECT_URI = process.env.REDIRECT_URI;
 const REFRESH_TOKEN = process.env.REFRESH_TOKEN;
 
 // Create an OAuth2 client
@@ -95,7 +95,9 @@ async function processEmails() {
 // Function to call the Anaylsis API and generate an automated reply
 async function generateAutomatedReply(from, to, subject, body) {
   try {
-    const response = await axios.post("http://localhost:3000/process-email", {
+    const ANALYSIS_API_URL = process.env.ANALYSIS_API_URL || 'http://localhost:3000/process-email';
+
+    const response = await axios.post(ANALYSIS_API_URL, {
       from,
       to,
       subject,
