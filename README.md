@@ -79,7 +79,7 @@ The goal of this project is to minimize the manual effort involved in managing e
    ```
 
 
-## Testimonials
+## Demo
 
 ### Input Email 
 
