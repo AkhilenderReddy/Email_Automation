@@ -2,6 +2,12 @@
 
 The goal of this project is to minimize the manual effort involved in managing emails by offering a robust, efficient, and dependable solution for email automation. By automating email responses, it ensures prompt replies, boosts productivity, and enhances communication efficiency. This system parses and checks emails from Google email accounts, automatically responding based on their context using AI. Integrated with Gmail, it retrieves unread emails, categorizes them using the Groq SDK with LLM (Llama), generates automated replies, and sends responses via Nodemailer.
 
+## Work Flow
+
+<div align="center">
+  <img src="https://github.com/AkhilenderReddy/Email_Automation/assets/99494371/5c5c8f68-4110-4454-8586-6cdcb69fa3b5" alt="Mind map" width="330" height="630">
+</div>
+
 ## Requirements
 
 - Node.js (version 14.x or later)
@@ -16,7 +22,6 @@ The goal of this project is to minimize the manual effort involved in managing e
 
    ```sh
    git clone https://github.com/AkhilenderReddy/Email_Automation.git
-   cd Email_Automation
 
 2. **Install Dependencies**
 
@@ -73,4 +78,13 @@ The goal of this project is to minimize the manual effort involved in managing e
    node analysis.js
    ```
 
----
+
+## Testimonials
+
+### Input Email 
+
+  <img src="https://github.com/AkhilenderReddy/Email_Automation/assets/99494371/a29012fc-1052-4cac-a585-734fb0a62b8b" alt="WhatsApp Image 2024-06-29 at 05 19 49_d387d1f9" width="300" height="550">
+
+### AI Generated Email
+
+   <img src="https://github.com/AkhilenderReddy/Email_Automation/assets/99494371/93e59735-d82a-4730-802b-e66b2634e3fc" alt="WhatsApp Image 2024-06-29 at 05 19 49_d387d1f9"  width="300" height="550">
